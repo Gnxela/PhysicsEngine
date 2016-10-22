@@ -13,8 +13,9 @@ public class Main {
 
     public static final int WIDTH = 1020, HEIGHT = 680;
 
-    private final int FPS = 60, TPS = 120;
-    private long lastFrame, lastTick;
+    private final int FPS = 60, TPS = 128;
+    private int frames, ticks;
+    private long lastFrame, lastTick, lastTitleUpdate;
 
     private PhysicsEngine physicsEngine;
     private JFrame frame;
@@ -36,17 +37,24 @@ public class Main {
 
         while (true) {
             if (System.currentTimeMillis() > lastFrame + 1000 / FPS) {
+                frames++;
                 render();
                 lastFrame = System.currentTimeMillis();
             }
 
-            //TPS represents the frequency of updates, however the engine is updated at every possible opportunity to provide 'smooth' physics.
             //A delta is used to insure that no matter how many ticks there really are, the physics updates the same.
-            if (System.currentTimeMillis() > lastFrame + 1000 / TPS) {
+            if(System.currentTimeMillis() > lastTick + 1000 / TPS) {
+                ticks++;
+                float delta = ((float)(System.currentTimeMillis() - lastTick) / (float)(1000 / TPS));//Cast to float so allow for decimals.
+                physicsEngine.update(delta);
                 lastTick = System.currentTimeMillis();
             }
-            float delta = ((System.currentTimeMillis() - lastTick) / (1000 / TPS));
-            physicsEngine.update(delta);
+
+            if(System.currentTimeMillis() > lastTitleUpdate + 1000) {
+                frame.setTitle("PhysicsEngine | " + frames + " | " + ticks);
+                frames = ticks = 0;
+                lastTitleUpdate = System.currentTimeMillis();
+            }
         }
     }
 
@@ -62,14 +70,19 @@ public class Main {
     }
 
     private void render() {
-        Graphics g = frame.getGraphics();
-        g.clearRect(0, 0, WIDTH, HEIGHT);//What even in double buffering?
+        Image buffer = frame.createImage(WIDTH, HEIGHT);
+        Graphics bufferGraphics = buffer.getGraphics();
 
-        //I could just use normal loops, but learning about Streams was useful.
+        bufferGraphics.clearRect(0, 0, WIDTH, HEIGHT);
+
         Stream<ShapeSquare> squareStream = physicsEngine.getBodies().stream().filter(body -> body instanceof ShapeSquare).map(body -> (ShapeSquare) body);
         Stream<Body> uncategorisedStream = physicsEngine.getBodies().stream().filter(body -> !(body instanceof ShapeSquare));
 
-        squareStream.forEach(body -> g.fillRect((int) body.getPosition().getX(), (int) body.getPosition().getY(), (int) body.getSize().getX(), (int) body.getSize().getY()));
+        squareStream.forEach(body -> bufferGraphics.fillRect((int) body.getPosition().getX(), (int) body.getPosition().getY(), (int) body.getSize().getX(), (int) body.getSize().getY()));
+
+
+        Graphics g = frame.getGraphics();
+        g.drawImage(buffer, 0, 0, frame);
     }
 
 }
