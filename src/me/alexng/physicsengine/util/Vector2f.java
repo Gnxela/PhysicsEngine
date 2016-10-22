@@ -8,6 +8,16 @@ public class Vector2f {
     private float x, y;
 
     /**
+     * Creates a new {@link Vector2f} with the value (0, 0).
+     *
+     * @param v The {@link Vector2f} to copy.
+     */
+    public Vector2f() {
+        this.x = 0;
+        this.y = 0;
+    }
+
+    /**
      * Creates a new {@link Vector2f} with the same values as v.
      *
      * @param v The {@link Vector2f} to copy.
