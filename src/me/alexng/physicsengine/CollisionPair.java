@@ -1,5 +1,6 @@
 package me.alexng.physicsengine;
 
+import me.alexng.physicsengine.util.Util;
 import me.alexng.physicsengine.util.Vector2f;
 
 /**
@@ -22,6 +23,9 @@ public class CollisionPair {
      * Reactions are not applies straight away as to not interfere with other collisions.
      */
     public boolean solve() {
+        if (a.getMass() <= 0 && b.getMass() <= 0)
+            return false;//No point calculating when the bodies can't move.
+
         if (a instanceof ShapeCircle && b instanceof ShapeCircle) {
             if (!CircleVsCircle((ShapeCircle) a, (ShapeCircle) b)) {
                 return false;
@@ -35,9 +39,12 @@ public class CollisionPair {
                 return false;
             }
         } else {
+            System.out.println("Something spooky happened...");
             normal = new Vector2f(0, 0);
             penetration = 1;
         }
+
+        normal = normal.normalize();
 
         //https://gamedevelopment.tutsplus.com/tutorials/how-to-create-a-custom-2d-physics-engine-the-basics-and-impulse-resolution--gamedev-6331
         //Source of equations.
@@ -49,10 +56,10 @@ public class CollisionPair {
         if (velocityAlongNormal > 0)
             return false;
 
-        float e = 1;//TODO bounce/elasticity
+        float e = 0.9f;//TODO bounce/elasticity
 
         float j = (1 + e) * -velocityAlongNormal;
-        j /= 1 / a.getMass() + 1 / b.getMass();//Create inverse mass to avoid calculating it every collision.
+        j /= (a.getMass() <= 0 ? 0 : 1 / a.getMass()) + (b.getMass() <= 0 ? 0 : 1 / b.getMass());//Create inverse mass to avoid calculating it every collision.
 
         // Apply impulse
         impulse = normal.mul(j, j);
@@ -80,7 +87,52 @@ public class CollisionPair {
     }
 
     private final boolean RectangleVsCircle(Body a, Body b) {
+        Vector2f dst = b.getPosition().add(((ShapeCircle) b).getRadius(), ((ShapeCircle) b).getRadius()).sub(a.getPosition().add(a.getSize().dev(2, 2)));
+        Vector2f closest = dst.clone();
 
+        float width = a.getSize().getX() / 2;
+        float height = a.getSize().getY() / 2;
+        closest = closest.set(Util.clamp(closest.getX(), -width, width), Util.clamp(closest.getY(), -height, height));
+
+        boolean inside = false;
+        if (dst.equals(closest)) {
+            inside = true;
+            if (Math.abs(dst.getX()) > Math.abs(dst.getX())) {
+                if (closest.getX() > 0)
+                    closest.setX(width);
+                else
+                    closest.setX(-width);
+            } else {
+                if (closest.getY() > 0)
+                    closest.setY(height);
+                else
+                    closest.setY(-height);
+            }
+        }
+
+        Vector2f normal = dst.sub(closest);
+        float d = normal.length();
+        float r = ((ShapeCircle) b).getRadius();//With how the function is called, b will always be a circle.
+
+        if (d * d > r * r && !inside)
+            return false;
+
+
+        /*
+            +---------+
+            |         |
+            |    o  1 |
+            |         |  2
+            +---------+
+
+        At position 2, the normal is the lone to the closest point.
+        At Position 1, the normal must be flipped.
+         */
+        penetration = r - d;
+        if (inside)
+            this.normal = normal.mul(-1, -1);
+        else
+            this.normal = normal;
         return true;
     }
 

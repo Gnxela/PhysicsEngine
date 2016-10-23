@@ -84,6 +84,28 @@ public class Vector2f {
     }
 
     /**
+     * Sets the x value of the vector.
+     *
+     * @param x The new x value.
+     * @return The changed vector.
+     */
+    public Vector2f setX(float x) {
+        this.x = x;
+        return this;
+    }
+
+    /**
+     * Sets the y value of the vector.
+     *
+     * @param y The new y value.
+     * @return The changed vector.
+     */
+    public Vector2f setY(float y) {
+        this.y = y;
+        return this;
+    }
+
+    /**
      * Adds the x and y values from v.
      *
      * @param v The vector to add.
@@ -225,4 +247,11 @@ public class Vector2f {
         return "Vector2f[" + getX() + ", " + getY() + "]";
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof Vector2f)
+            if (((Vector2f) obj).getX() == getX() && ((Vector2f) obj).getY() == getY())
+                return true;
+        return super.equals(obj);
+    }
 }

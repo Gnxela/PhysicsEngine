@@ -16,6 +16,11 @@ public class ShapeCircle extends Shape {
     }
 
     @Override
+    public Vector2f getPosition() {
+        return super.getPosition();
+    }
+
+    @Override
     public float calculateMass() {
         return (float) Math.PI * radius * radius * getDensity();
     }

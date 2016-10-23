@@ -8,6 +8,7 @@ import me.alexng.physicsengine.util.Vector2f;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Stream;
 
 public class Main {
@@ -71,16 +72,30 @@ public class Main {
     }
 
     private void initScene() {
-        ShapeRectangle platform = new ShapeRectangle(new Vector2f(100, 600), new Vector2f(WIDTH - 200, 50));
+        ShapeRectangle platform = new ShapeRectangle(new Vector2f(100, 500), new Vector2f(WIDTH - 200, 100));
         platform.setMass(0);
-        //physicsEngine.addBody(platform);
+        physicsEngine.addBody(platform);
 
-        ShapeCircle test = new ShapeCircle(new Vector2f(345, 400), 25);
-        test.applyForce(new Vector2f(0, -4000));
-        physicsEngine.addBody(test);
+        ShapeRectangle left = new ShapeRectangle(new Vector2f(WIDTH-125, 200), new Vector2f(25, 325));
+        left.setMass(0);
+        physicsEngine.addBody(left);
 
-        physicsEngine.addBody(new ShapeCircle(new Vector2f(300, 100), 25));
-        physicsEngine.addBody(new ShapeCircle(new Vector2f(310, 30), 25));
+        ShapeRectangle right = new ShapeRectangle(new Vector2f(100, 200), new Vector2f(25, 325));
+        right.setMass(0);
+        physicsEngine.addBody(right);
+
+        Vector2f min = new Vector2f(125, 125);
+        Vector2f max = new Vector2f(WIDTH - 150, 300);
+
+        for(int i = 0; i < 20; i++) {
+            int x = ThreadLocalRandom.current().nextInt((int)min.getX(), (int)max.getX());
+            int y = ThreadLocalRandom.current().nextInt((int)min.getY(), (int)max.getY());
+            ShapeCircle c = new ShapeCircle(new Vector2f(x + 10, y + 10), 20);
+            physicsEngine.addBody(c);
+        }
+
+        //physicsEngine.addBody(new ShapeCircle(new Vector2f(300, 100), 25));
+       // physicsEngine.addBody(new ShapeCircle(new Vector2f(310, 30), 25));
     }
 
     private void render() {
@@ -104,9 +119,13 @@ public class Main {
         });
 
         int i = 0;
+        bufferGraphics.setColor(Color.RED);
         bufferGraphics.drawString("Type | Mass", 4, 37 + i * 12);
         for (Body body : physicsEngine.getBodies()) {
             i++;
+            bufferGraphics.setColor(Color.black);
+            if(body.getMass() <= 0)
+                bufferGraphics.setColor(Color.red.darker());
             bufferGraphics.drawString(body.getClass().getSimpleName() + " | " + body.getMass(), 4, 37 + i * 12);
         }
 
